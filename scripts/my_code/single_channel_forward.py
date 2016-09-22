@@ -10,6 +10,7 @@ import theano
 import theano.tensor as T
 from voxnet import npytar
 
+import matplotlib.pyplot as plt
 
 cfg = {'batch_size' : 10, # previous 32
        # 'learning_rate' : lr_schedule, #doesn't matter for forward
@@ -58,16 +59,19 @@ l_pool2 = voxnet.layers.MaxPool3dLayer(
     pool_shape = [2,2,2],
     name = 'pool2',
     )
+l_fc0 = lasagne.layers.FlattenLayer(l_pool2, name = 'fc0')
 l_fc1 = lasagne.layers.DenseLayer(
-    incoming = l_pool2,
-    num_units = 10, # previously 128
-    W = lasagne.init.Normal(std=0.01),
+    incoming = l_fc0,
+    num_units = 6, # previously 128
+    # W = lasagne.init.Normal(std=0.01),
+    W=voxnet.init.Ones(),
     name =  'fc1'
     )
 l_fc2 = lasagne.layers.DenseLayer(
     incoming = l_fc1,
     num_units = n_classes,
-    W = lasagne.init.Normal(std = 0.01),
+    # W = lasagne.init.Normal(std = 0.01),
+    W=voxnet.init.Ones(),
     nonlinearity = None,
     name = 'fc2'
     )
@@ -91,27 +95,55 @@ def data_loader(cfg, fname):
 
 
 # forward pass
-layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc1, l_fc2]
-# layers = [l_conv1, l_pool2, l_fc1, l_fc2]
+layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc0, l_fc1, l_fc2]
 # change number here to visualize activations at different layer
-l_out = layers[0]
+layer_idx = 4
+l_out = layers[layer_idx]
 X = T.TensorType('float32', [False] * 5)('X')
 act = lasagne.layers.get_output(l_out, X, deterministic=True)
 tt = theano.function([X], act)
 
-loader = (data_loader(cfg, '../../more_data_sal/shapenet10_test.tar'))
+loader = (data_loader(cfg, '../../more_data_sal/shapenet10_train.tar'))
+fig = plt.figure()
+rrtt0 = [] # for pot
+rrtt1 = [] # for cup
 for i,(x_shared, y_shared) in enumerate(loader):
     rr = tt(x_shared)
-    size = 32
-    w = rr[0, 0]
-    # centerize the plot
-    fz = len(w)
-    xd = np.zeros((size,size,size))
-    pad = (size-fz)/2
-    xd[pad:pad+fz,pad:pad+fz,pad:pad+fz] = w
-    # only visualize the largest value
-    t = 0
-    xd[xd<t]=0
-    # store as png
-    iv = isovox.IsoVox()
-    img = iv.render(xd, as_html=True, name='../act/inst'+str(i))
+    if y_shared[0] == 0:
+        rrtt0.append( rr )
+    else:
+        rrtt1.append( rr )
+
+    if l_out.name in {'fc0','fc1','fc2'}:
+        print(y_shared[0], rr[0])
+    else:
+        size = 32
+        w = rr[0, 0]
+        # centerize the plot
+        fz = len(w)
+        xd = np.zeros((size,size,size))
+        pad = (size-fz)/2
+        xd[pad:pad+fz,pad:pad+fz,pad:pad+fz] = w
+        # only visualize the largest value
+        t = 0
+        xd[xd<t]=0
+        # store as png
+        iv = isovox.IsoVox()
+        img = iv.render(xd, as_html=True, name='../act/inst'+str(i))
+        print(y_shared[0], rr[0])
+    if l_out.name == 'fc2':
+        if y_shared[0] == 0:
+            plt.plot(rr[0, 0], rr[0, 1], 'b.')
+        else:
+            plt.plot(rr[0, 0], rr[0, 1], 'ro')
+if l_out.name == 'fc0':
+    # np.save('act.npy', rrtt)
+    ax1 = plt.subplot(211)
+    ax1.imshow(np.squeeze(np.asarray(rrtt0)))
+    ax1.set_title("POT activation before going to fc1")
+    ax2 = plt.subplot(212)
+    ax2.imshow(np.squeeze(np.asarray(rrtt1)))
+    ax2.set_title("CUP activation before going to fc1")
+    plt.show()
+if l_out.name == 'fc2':
+    plt.show()

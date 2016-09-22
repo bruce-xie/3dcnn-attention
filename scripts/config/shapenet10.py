@@ -34,7 +34,7 @@ def get_model():
     l_in = lasagne.layers.InputLayer(shape=shape)
     l_conv1 = voxnet.layers.Conv3dMMLayer(
             input_layer = l_in,
-            num_filters = 1, # previously 32
+            num_filters = 16, # previously 32
             filter_size = [5,5,5],
             border_mode = 'valid',
             strides = [2,2,2],
@@ -50,7 +50,7 @@ def get_model():
         )
     l_conv2 = voxnet.layers.Conv3dMMLayer(
         input_layer = l_drop1,
-        num_filters = 1, # previously 32
+        num_filters = 16, # previously 32
         filter_size = [3,3,3],
         border_mode = 'valid',
         W = voxnet.init.Prelu(),
@@ -80,7 +80,7 @@ def get_model():
         )
     l_fc1 = lasagne.layers.DenseLayer(
         incoming = l_drop2,
-        num_units = 1, # previously 128
+        num_units = 10, # previously 128
         W = lasagne.init.Normal(std=0.01),
         name =  'fc1'
         )
