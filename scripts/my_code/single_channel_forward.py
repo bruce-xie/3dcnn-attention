@@ -2,6 +2,7 @@ import numpy as np
 
 import lasagne
 import lasagne.layers
+from lasagne.utils import floatX
 
 import voxnet
 import theano
@@ -39,9 +40,11 @@ def get_model():
             filter_size = [5,5,5],
             border_mode = 'valid',
             strides = [2,2,2],
-            W = voxnet.init.Prelu(),
+            # W = voxnet.init.Prelu(),
+            W = voxnet.init.Ones(),
             nonlinearity = voxnet.activations.leaky_relu_01,
-            name =  'conv1'
+            name =  'conv1',
+            b = floatX(np.zeros(l_in.shape[1]))
         )
 
     l_drop1 = lasagne.layers.DropoutLayer(
@@ -54,10 +57,12 @@ def get_model():
         num_filters = 1, # previously 32
         filter_size = [3,3,3],
         border_mode = 'valid',
-        W = voxnet.init.Prelu(),
+        # W = voxnet.init.Prelu(),
+        W=voxnet.init.Ones(),
         nonlinearity = voxnet.activations.leaky_relu_01,
-        name = 'conv2'
-        )
+        name = 'conv2',
+        b = floatX(np.zeros(l_drop1.output_shape[1]))
+    )
 
     # Hope added. out put filter for visualization
     visualize_filter = 0

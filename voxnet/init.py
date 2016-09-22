@@ -24,3 +24,11 @@ class Prelu(lasagne.init.Initializer):
         nl = c*receptive_field_size
         std = np.sqrt(2.0/(nl))
         return floatX(np.random.normal(0, std, size=shape))
+
+
+class Ones(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        return floatX(np.ones(shape))
