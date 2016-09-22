@@ -87,7 +87,7 @@ def data_loader(cfg, fname):
         xc[cix] = x.astype(np.float32)
         yc.append(int(name.split('.')[0])-1)
         if len(yc) == chunk_size:
-            yield (2.0*xc - 1.0, np.asarray(yc, dtype=np.float32))
+            yield (xc, np.asarray(yc, dtype=np.float32))
             yc = []
             xc.fill(0)
     assert(len(yc)==0)
@@ -96,27 +96,26 @@ def data_loader(cfg, fname):
 layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc1, l_fc2]
 # layers = [l_conv1, l_pool2, l_fc1, l_fc2]
 
-l_out = layers[1]
+l_out = layers[0]
 X = T.TensorType('float32', [False] * 5)('X')
 act = lasagne.layers.get_output(l_out, X, deterministic=True)
 tt = theano.function([X], act)
 
 loader = (data_loader(cfg, '../../more_data_sal/shapenet10_test.tar'))
-for x_shared, y_shared in loader:
+for i,(x_shared, y_shared) in enumerate(loader):
     rr = tt(x_shared)
     # print(np.argmax(np.sum(rr1,0)), np.argmax(np.sum(rr2,0)))
-    print(rr)
-
-size = 32
-w = rr[0, 0]
-# centerize the plot
-fz = len(w)
-xd = np.zeros((size,size,size))
-pad = (size-fz)/2
-xd[pad:pad+fz,pad:pad+fz,pad:pad+fz] = w
-# only visualize the largest value
-t = 0
-xd[xd<t]=0
-# store as png
-iv = isovox.IsoVox()
-img = iv.render(xd, as_html=True, name='../act/l1')
+    # print(rr)
+    size = 32
+    w = rr[0, 0]
+    # centerize the plot
+    fz = len(w)
+    xd = np.zeros((size,size,size))
+    pad = (size-fz)/2
+    xd[pad:pad+fz,pad:pad+fz,pad:pad+fz] = w
+    # only visualize the largest value
+    t = 0
+    xd[xd<t]=0
+    # store as png
+    iv = isovox.IsoVox()
+    img = iv.render(xd, as_html=True, name='../act/inst'+str(i))
