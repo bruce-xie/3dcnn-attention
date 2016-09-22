@@ -3,6 +3,7 @@ import numpy as np
 import lasagne
 import lasagne.layers
 from lasagne.utils import floatX
+from voxnet import isovox
 
 import voxnet
 import theano
@@ -29,80 +30,51 @@ cfg = {'batch_size' : 10, # previous 32
        'checkpoint_every_nth' : 4000,
        }
 
-def get_model():
-    dims, n_channels, n_classes = tuple(cfg['dims']), cfg['n_channels'], cfg['n_classes']
-    shape = (None, n_channels)+dims
+dims, n_channels, n_classes = tuple(cfg['dims']), cfg['n_channels'], cfg['n_classes']
+shape = (None, n_channels)+dims
 
-    l_in = lasagne.layers.InputLayer(shape=shape)
-    l_conv1 = voxnet.layers.Conv3dMMLayer(
-            input_layer = l_in,
-            num_filters = 1, # previously 32
-            filter_size = [5,5,5],
-            border_mode = 'valid',
-            strides = [2,2,2],
-            # W = voxnet.init.Prelu(),
-            W = voxnet.init.Ones(),
-            nonlinearity = voxnet.activations.leaky_relu_01,
-            name =  'conv1',
-            b = floatX(np.zeros(l_in.shape[1]))
-        )
-
-    l_drop1 = lasagne.layers.DropoutLayer(
-        incoming = l_conv1,
-        p = 0.2,
-        name = 'drop1'
-        )
-    l_conv2 = voxnet.layers.Conv3dMMLayer(
-        input_layer = l_drop1,
+l_in = lasagne.layers.InputLayer(shape=shape)
+l_conv1 = voxnet.layers.Conv3dMMLayer(
+        input_layer = l_in,
         num_filters = 1, # previously 32
-        filter_size = [3,3,3],
+        filter_size = [5,5,5],
         border_mode = 'valid',
+        strides = [2,2,2],
         # W = voxnet.init.Prelu(),
-        W=voxnet.init.Ones(),
+        W = voxnet.init.Ones(),
         nonlinearity = voxnet.activations.leaky_relu_01,
-        name = 'conv2',
-        b = floatX(np.zeros(l_drop1.output_shape[1]))
+        name =  'conv1',
+        b = floatX(np.zeros(l_in.shape[1]))
     )
-
-    # Hope added. out put filter for visualization
-    visualize_filter = 0
-    if visualize_filter:
-        W1 = np.array(l_conv1.W.eval())
-        np.save('W1.npy',W1)
-        W2 = np.array(l_conv2.W.eval())
-        np.save('W2.npy', W2)
-        import sys
-        sys.exit("filters written done")
-
-    l_pool2 = voxnet.layers.MaxPool3dLayer(
-        input_layer = l_conv2,
-        pool_shape = [2,2,2],
-        name = 'pool2',
-        )
-    l_drop2 = lasagne.layers.DropoutLayer(
-        incoming = l_pool2,
-        p = 0.3,
-        name = 'drop2',
-        )
-    l_fc1 = lasagne.layers.DenseLayer(
-        incoming = l_drop2,
-        num_units = 1, # previously 128
-        W = lasagne.init.Normal(std=0.01),
-        name =  'fc1'
-        )
-    l_drop3 = lasagne.layers.DropoutLayer(
-        incoming = l_fc1,
-        p = 0.4,
-        name = 'drop3',
-        )
-    l_fc2 = lasagne.layers.DenseLayer(
-        incoming = l_drop3,
-        num_units = n_classes,
-        W = lasagne.init.Normal(std = 0.01),
-        nonlinearity = None,
-        name = 'fc2'
-        )
-    return {'l_in':l_in, 'l_out':l_fc2}
+l_conv2 = voxnet.layers.Conv3dMMLayer(
+    input_layer = l_conv1,
+    num_filters = 1, # previously 32
+    filter_size = [3,3,3],
+    border_mode = 'valid',
+    # W = voxnet.init.Prelu(),
+    W=voxnet.init.Ones(),
+    nonlinearity = voxnet.activations.leaky_relu_01,
+    name = 'conv2',
+    b = floatX(np.zeros(l_conv1.output_shape[1]))
+)
+l_pool2 = voxnet.layers.MaxPool3dLayer(
+    input_layer = l_conv2,
+    pool_shape = [2,2,2],
+    name = 'pool2',
+    )
+l_fc1 = lasagne.layers.DenseLayer(
+    incoming = l_pool2,
+    num_units = 10, # previously 128
+    W = lasagne.init.Normal(std=0.01),
+    name =  'fc1'
+    )
+l_fc2 = lasagne.layers.DenseLayer(
+    incoming = l_fc1,
+    num_units = n_classes,
+    W = lasagne.init.Normal(std = 0.01),
+    nonlinearity = None,
+    name = 'fc2'
+    )
 
 def data_loader(cfg, fname):
     dims = cfg['dims']
@@ -121,13 +93,30 @@ def data_loader(cfg, fname):
     assert(len(yc)==0)
 
 
-model = get_model()
-l_out = model['l_out']
+layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc1, l_fc2]
+# layers = [l_conv1, l_pool2, l_fc1, l_fc2]
+
+l_out = layers[1]
 X = T.TensorType('float32', [False] * 5)('X')
-dout = lasagne.layers.get_output(l_out, X, deterministic=True)
-tt=theano.function([X], dout)
+act = lasagne.layers.get_output(l_out, X, deterministic=True)
+tt = theano.function([X], act)
+
 loader = (data_loader(cfg, '../../more_data_sal/shapenet10_test.tar'))
 for x_shared, y_shared in loader:
-    xx=x_shared
-    rr = tt(xx)
-    print(np.argmax(np.sum(rr,0)))
+    rr = tt(x_shared)
+    # print(np.argmax(np.sum(rr1,0)), np.argmax(np.sum(rr2,0)))
+    print(rr)
+
+size = 32
+w = rr[0, 0]
+# centerize the plot
+fz = len(w)
+xd = np.zeros((size,size,size))
+pad = (size-fz)/2
+xd[pad:pad+fz,pad:pad+fz,pad:pad+fz] = w
+# only visualize the largest value
+t = 0
+xd[xd<t]=0
+# store as png
+iv = isovox.IsoVox()
+img = iv.render(xd, as_html=True, name='../act/l1')
