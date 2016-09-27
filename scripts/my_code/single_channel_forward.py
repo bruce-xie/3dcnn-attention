@@ -62,9 +62,9 @@ l_pool2 = voxnet.layers.MaxPool3dLayer(
 l_fc0 = lasagne.layers.FlattenLayer(l_pool2, name = 'fc0')
 l_fc1 = lasagne.layers.DenseLayer(
     incoming = l_fc0,
-    num_units = 6, # previously 128
+    num_units = 1, # previously 128
     # W = lasagne.init.Normal(std=0.01),
-    W=voxnet.init.Ones(),
+    W=voxnet.init.fcwt(),
     name =  'fc1'
     )
 l_fc2 = lasagne.layers.DenseLayer(
@@ -97,7 +97,7 @@ def data_loader(cfg, fname):
 # forward pass
 layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc0, l_fc1, l_fc2]
 # change number here to visualize activations at different layer
-layer_idx = 4
+layer_idx = 5
 l_out = layers[layer_idx]
 X = T.TensorType('float32', [False] * 5)('X')
 act = lasagne.layers.get_output(l_out, X, deterministic=True)
@@ -136,6 +136,21 @@ for i,(x_shared, y_shared) in enumerate(loader):
             plt.plot(rr[0, 0], rr[0, 1], 'b.')
         else:
             plt.plot(rr[0, 0], rr[0, 1], 'ro')
+    if l_out.name == 'fc1':
+        if y_shared[0] == 0:
+            plt.loglog(rr[0, 0], rr[0, 0], 'b.')
+        else:
+            plt.loglog(rr[0, 0], rr[0, 0], 'ro')
+
+loader1 = (data_loader(cfg, '../../more_data_sal/shapenet10_test.tar'))
+for i,(x_shared, y_shared) in enumerate(loader1):
+    rr = tt(x_shared)
+    if l_out.name == 'fc1':
+        if y_shared[0] == 0:
+            plt.loglog(rr[0, 0], rr[0, 0], 'bv')
+        else:
+            plt.loglog(rr[0, 0], rr[0, 0], 'r^')
+
 if l_out.name == 'fc0':
     # np.save('act.npy', rrtt)
     ax1 = plt.subplot(211)
@@ -145,5 +160,5 @@ if l_out.name == 'fc0':
     ax2.imshow(np.squeeze(np.asarray(rrtt1)))
     ax2.set_title("CUP activation before going to fc1")
     plt.show()
-if l_out.name == 'fc2':
+if l_out.name in {'fc1','fc2'}:
     plt.show()

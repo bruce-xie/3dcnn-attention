@@ -32,3 +32,13 @@ class Ones(lasagne.init.Initializer):
 
     def sample(self, shape):
         return floatX(np.ones(shape))
+
+class fcwt(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.ones(shape);
+        loc = [38,39,44,45, 74,75,80,81, 110,111,116,117, 146,147,152,153, 182,183,188,189]
+        W[loc, :] = 10 * W[loc, :]
+        return floatX(W)
