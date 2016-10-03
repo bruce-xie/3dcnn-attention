@@ -1,0 +1,7 @@
+10_10_1_0: lr=1e-5 epoch=1000 train=1.0 test=1.0
+
+3_3_1_0: lr=1e-5 epoch=1000 train=1.0 test=0.5
+
+
+
+

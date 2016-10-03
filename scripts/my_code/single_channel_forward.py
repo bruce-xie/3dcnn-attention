@@ -27,32 +27,35 @@ cfg = {'batch_size' : 10, # previous 32
        'checkpoint_every_nth' : 4000,
        }
 
+
 # same network structure as Voxnet, only without dropout
 dims, n_channels, n_classes = tuple(cfg['dims']), cfg['n_channels'], cfg['n_classes']
 shape = (None, n_channels)+dims
 l_in = lasagne.layers.InputLayer(shape=shape)
 l_conv1 = voxnet.layers.Conv3dMMLayer(
         input_layer = l_in,
-        num_filters = 1, # previously 32
+        num_filters = 16, # previously 32
         filter_size = [5,5,5],
         border_mode = 'valid',
         strides = [2,2,2],
         # W = voxnet.init.Prelu(),
-        W = voxnet.init.Ones(),
+        # W = voxnet.init.Ones(),
+        W = voxnet.init.loadw1(),
         nonlinearity = voxnet.activations.leaky_relu_01,
         name =  'conv1',
-        b = floatX(np.zeros(l_in.shape[1]))
+        # b = floatX(np.zeros(l_in.shape[1]))
     )
 l_conv2 = voxnet.layers.Conv3dMMLayer(
     input_layer = l_conv1,
-    num_filters = 1, # previously 32
+    num_filters = 16, # previously 32
     filter_size = [3,3,3],
     border_mode = 'valid',
     # W = voxnet.init.Prelu(),
-    W=voxnet.init.Ones(),
+    # W=voxnet.init.Ones(),
+    W=voxnet.init.loadw2(),
     nonlinearity = voxnet.activations.leaky_relu_01,
     name = 'conv2',
-    b = floatX(np.zeros(l_conv1.output_shape[1]))
+    # b = floatX(np.zeros(l_conv1.output_shape[1]))
 )
 l_pool2 = voxnet.layers.MaxPool3dLayer(
     input_layer = l_conv2,
@@ -97,14 +100,13 @@ def data_loader(cfg, fname):
 # forward pass
 layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc0, l_fc1, l_fc2]
 # change number here to visualize activations at different layer
-layer_idx = 5
+layer_idx = 4
 l_out = layers[layer_idx]
 X = T.TensorType('float32', [False] * 5)('X')
 act = lasagne.layers.get_output(l_out, X, deterministic=True)
 tt = theano.function([X], act)
 
-loader = (data_loader(cfg, '../../more_data_sal/shapenet10_train.tar'))
-fig = plt.figure()
+loader = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_train.tar'))
 rrtt0 = [] # for pot
 rrtt1 = [] # for cup
 for i,(x_shared, y_shared) in enumerate(loader):
@@ -142,7 +144,7 @@ for i,(x_shared, y_shared) in enumerate(loader):
         else:
             plt.loglog(rr[0, 0], rr[0, 0], 'ro')
 
-loader1 = (data_loader(cfg, '../../more_data_sal/shapenet10_test.tar'))
+loader1 = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_test.tar'))
 for i,(x_shared, y_shared) in enumerate(loader1):
     rr = tt(x_shared)
     if l_out.name == 'fc1':
@@ -152,13 +154,30 @@ for i,(x_shared, y_shared) in enumerate(loader1):
             plt.loglog(rr[0, 0], rr[0, 0], 'r^')
 
 if l_out.name == 'fc0':
+    fig, axes = plt.subplots(nrows=4, ncols=1)
     # np.save('act.npy', rrtt)
-    ax1 = plt.subplot(211)
-    ax1.imshow(np.squeeze(np.asarray(rrtt0)))
-    ax1.set_title("POT activation before going to fc1")
-    ax2 = plt.subplot(212)
-    ax2.imshow(np.squeeze(np.asarray(rrtt1)))
-    ax2.set_title("CUP activation before going to fc1")
+    ax1 = axes[0]
+    im = ax1.imshow(np.squeeze(np.asarray(rrtt0)))
+    ax1.set_title("training POT activation before going to fc1")
+
+    ax2 = axes[1]
+    im = ax2.imshow(np.squeeze(np.asarray(rrtt1)))
+    ax2.set_title("training CUP activation before going to fc1")
+
+    loader1 = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_test.tar'))
+    for i, (x_shared, y_shared) in enumerate(loader1):
+        rr = tt(x_shared)
+        if y_shared[0] == 0:
+            ax3 = axes[2]
+            im = ax3.imshow(np.squeeze(np.asarray(rr)))
+            ax3.set_title("testing POT activation before going to fc1")
+        else:
+            ax4 = axes[3]
+            im = ax4.imshow(np.squeeze(np.asarray(rr)))
+            ax4.set_title("testing CUP activation before going to fc1")
+
+    fig.colorbar(im, ax=axes.ravel().tolist())
+    # fig.savefig('test.png')
     plt.show()
 if l_out.name in {'fc1','fc2'}:
     plt.show()

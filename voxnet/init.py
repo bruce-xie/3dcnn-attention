@@ -42,3 +42,19 @@ class fcwt(lasagne.init.Initializer):
         loc = [38,39,44,45, 74,75,80,81, 110,111,116,117, 146,147,152,153, 182,183,188,189]
         W[loc, :] = 10 * W[loc, :]
         return floatX(W)
+
+class loadw1(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_3_3_1_0/weights.npz')['conv1.W.npy']
+        return floatX(W)
+
+class loadw2(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_3_3_1_0/weights.npz')['conv2.W.npy']
+        return floatX(W)

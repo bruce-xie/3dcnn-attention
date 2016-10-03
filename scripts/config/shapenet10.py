@@ -6,13 +6,13 @@ import lasagne.layers
 
 import voxnet
 
-lr_schedule = { 0: 0.001,
+lr_schedule = { 0: 0.00001,
                 60000: 0.0001,
                 400000: 0.00005,
                 600000: 0.00001,
                 }
 
-cfg = {'batch_size' : 10, # previous 32
+cfg = {'batch_size' : 5, # previous 32
        'learning_rate' : lr_schedule,
        'reg' : 0.001,
        'momentum' : 0.9,
@@ -20,7 +20,7 @@ cfg = {'batch_size' : 10, # previous 32
        'n_channels' : 1,
        'n_classes' : 2,# previous 10
        'batches_per_chunk': 1, # previous 64
-       'max_epochs' : 600,  #previous 80
+       'max_epochs' : 1000,  #previous 80
        'max_jitter_ij' : 2,
        'max_jitter_k' : 2,
        'n_rotations' : 1, # previous 12
