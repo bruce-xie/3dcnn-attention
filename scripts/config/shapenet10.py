@@ -50,7 +50,7 @@ def get_model():
         )
     l_conv2 = voxnet.layers.Conv3dMMLayer(
         input_layer = l_drop1,
-        num_filters = 16, # previously 32
+        num_filters = 4, # previously 32
         filter_size = [3,3,3],
         border_mode = 'valid',
         W = voxnet.init.Prelu(),
