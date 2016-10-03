@@ -65,7 +65,7 @@ l_pool2 = voxnet.layers.MaxPool3dLayer(
 l_fc0 = lasagne.layers.FlattenLayer(l_pool2, name = 'fc0')
 l_fc1 = lasagne.layers.DenseLayer(
     incoming = l_fc0,
-    num_units = 1, # previously 128
+    num_units = 10, # previously 128
     # W = lasagne.init.Normal(std=0.01),
     W=voxnet.init.fcwt(),
     name =  'fc1'
@@ -100,13 +100,13 @@ def data_loader(cfg, fname):
 # forward pass
 layers = [l_in, l_conv1, l_conv2, l_pool2, l_fc0, l_fc1, l_fc2]
 # change number here to visualize activations at different layer
-layer_idx = 4
+layer_idx = 6
 l_out = layers[layer_idx]
 X = T.TensorType('float32', [False] * 5)('X')
 act = lasagne.layers.get_output(l_out, X, deterministic=True)
 tt = theano.function([X], act)
 
-loader = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_train.tar'))
+loader = (data_loader(cfg, '../../more_data_real_3_3_1_0/shapenet10_train.tar'))
 rrtt0 = [] # for pot
 rrtt1 = [] # for cup
 for i,(x_shared, y_shared) in enumerate(loader):
@@ -135,26 +135,26 @@ for i,(x_shared, y_shared) in enumerate(loader):
         print(y_shared[0], rr[0])
     if l_out.name == 'fc2':
         if y_shared[0] == 0:
-            plt.plot(rr[0, 0], rr[0, 1], 'b.')
+            plt.plot(rr[0, 0], rr[0, 1], 'bo')
         else:
             plt.plot(rr[0, 0], rr[0, 1], 'ro')
     if l_out.name == 'fc1':
         if y_shared[0] == 0:
-            plt.loglog(rr[0, 0], rr[0, 0], 'b.')
+            plt.loglog(rr[0, 0], rr[0, 0], 'bo')
         else:
             plt.loglog(rr[0, 0], rr[0, 0], 'ro')
 
-loader1 = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_test.tar'))
+loader1 = (data_loader(cfg, '../../more_data_real_3_3_1_0/shapenet10_test.tar'))
 for i,(x_shared, y_shared) in enumerate(loader1):
     rr = tt(x_shared)
-    if l_out.name == 'fc1':
+    if l_out.name == 'fc2':
         if y_shared[0] == 0:
             plt.loglog(rr[0, 0], rr[0, 0], 'bv')
         else:
             plt.loglog(rr[0, 0], rr[0, 0], 'r^')
 
 if l_out.name == 'fc0':
-    fig, axes = plt.subplots(nrows=4, ncols=1)
+    fig, axes = plt.subplots(nrows=2, ncols=1)
     # np.save('act.npy', rrtt)
     ax1 = axes[0]
     im = ax1.imshow(np.squeeze(np.asarray(rrtt0)))
@@ -164,20 +164,21 @@ if l_out.name == 'fc0':
     im = ax2.imshow(np.squeeze(np.asarray(rrtt1)))
     ax2.set_title("training CUP activation before going to fc1")
 
-    loader1 = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_test.tar'))
-    for i, (x_shared, y_shared) in enumerate(loader1):
-        rr = tt(x_shared)
-        if y_shared[0] == 0:
-            ax3 = axes[2]
-            im = ax3.imshow(np.squeeze(np.asarray(rr)))
-            ax3.set_title("testing POT activation before going to fc1")
-        else:
-            ax4 = axes[3]
-            im = ax4.imshow(np.squeeze(np.asarray(rr)))
-            ax4.set_title("testing CUP activation before going to fc1")
+    # loader1 = (data_loader(cfg, '../../more_data_real_10_10_1_0/shapenet10_test.tar'))
+    # for i, (x_shared, y_shared) in enumerate(loader1):
+    #     rr = tt(x_shared)
+    #     if y_shared[0] == 0:
+    #         ax3 = axes[2]
+    #         im = ax3.imshow(np.squeeze(np.asarray(rr)))
+    #         ax3.set_title("testing POT activation before going to fc1")
+    #     else:
+    #         ax4 = axes[3]
+    #         im = ax4.imshow(np.squeeze(np.asarray(rr)))
+    #         ax4.set_title("testing CUP activation before going to fc1")
 
-    fig.colorbar(im, ax=axes.ravel().tolist())
+    # fig.colorbar(im, ax=axes.ravel().tolist())
     # fig.savefig('test.png')
     plt.show()
+
 if l_out.name in {'fc1','fc2'}:
     plt.show()
