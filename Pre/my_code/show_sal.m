@@ -14,14 +14,34 @@ else
     assert(0);
 end
 v = sal(Mesh);
-vis(FV,v)
 
-volume_size = 30;
+
+figure;vis(FV,v);
+volume_size = 26;
+padding = 2; % and padding of two in each side
+fv = recenter(FV,volume_size,padding);
+figure;vis(fv,v);axis([0,30,0,30,0,30])
+
 instance = polygon2voxel(FV, [volume_size, volume_size, volume_size], 'auto');
 
 lowres_fv = isosurface(the_sample,threshold);
 vis(instance,v)
 show_sample(instance,0.5)
+end
+
+function FV=recenter(FV,vsize,padding)
+    zmax = max(FV.vertices(:,3));
+    zmin = min(FV.vertices(:,3));
+    ymax = max(FV.vertices(:,2));
+    ymin = min(FV.vertices(:,2));
+    xmax = max(FV.vertices(:,1));
+    xmin = min(FV.vertices(:,1));
+    
+    scale = max([xmax-xmin,ymax-ymin,zmax-zmin]);
+    
+    FV.vertices(:,1) = (FV.vertices(:,1)-xmin) / scale * vsize + padding;
+    FV.vertices(:,2) = (FV.vertices(:,2)-ymin) / scale * vsize + padding;
+    FV.vertices(:,3) = (FV.vertices(:,3)-zmin) / scale * vsize + padding;
 end
 
 function vis(FV,v)
