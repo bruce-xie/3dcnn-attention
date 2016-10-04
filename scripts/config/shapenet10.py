@@ -6,13 +6,13 @@ import lasagne.layers
 
 import voxnet
 
-lr_schedule = { 0: 0.00001,
+lr_schedule = { 0: 0.001,
                 60000: 0.0001,
                 400000: 0.00005,
                 600000: 0.00001,
                 }
 
-cfg = {'batch_size' : 5, # previous 32
+cfg = {'batch_size' : 10, # previous 32
        'learning_rate' : lr_schedule,
        'reg' : 0.001,
        'momentum' : 0.9,
@@ -20,7 +20,7 @@ cfg = {'batch_size' : 5, # previous 32
        'n_channels' : 1,
        'n_classes' : 2,# previous 10
        'batches_per_chunk': 1, # previous 64
-       'max_epochs' : 1000,  #previous 80
+       'max_epochs' : 80,  #previous 80
        'max_jitter_ij' : 2,
        'max_jitter_k' : 2,
        'n_rotations' : 1, # previous 12
@@ -34,7 +34,7 @@ def get_model():
     l_in = lasagne.layers.InputLayer(shape=shape)
     l_conv1 = voxnet.layers.Conv3dMMLayer(
             input_layer = l_in,
-            num_filters = 16, # previously 32
+            num_filters = 32, # previously 32
             filter_size = [5,5,5],
             border_mode = 'valid',
             strides = [2,2,2],
@@ -50,7 +50,7 @@ def get_model():
         )
     l_conv2 = voxnet.layers.Conv3dMMLayer(
         input_layer = l_drop1,
-        num_filters = 16, # previously 32
+        num_filters = 32, # previously 32
         filter_size = [3,3,3],
         border_mode = 'valid',
         W = voxnet.init.Prelu(),
@@ -80,7 +80,7 @@ def get_model():
         )
     l_fc1 = lasagne.layers.DenseLayer(
         incoming = l_drop2,
-        num_units = 10, # previously 128
+        num_units = 128, # previously 128
         W = lasagne.init.Normal(std=0.01),
         name =  'fc1'
         )
