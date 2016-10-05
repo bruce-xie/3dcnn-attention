@@ -1,15 +1,39 @@
-function show_sal(meshfile)
-% visualize both meshed object and its saliency computed by curvature
-% method
-% usage:
-% show_sal('/home/p2admin/Documents/Hope/voxnet/cup/train/cup_0030.off')
+function show_sal(meshdir,outputdir,filetype,viz)
+% input: meshdir(str), outputdir(str)
+% filetype(str): off or json, viz(num): 0 or 1
 
-meshfile = '/home/p2admin/Documents/Hope/voxnet/cup/train/cup_0030.off';
-% load mesh file
-if strcmp(meshfile(end-2:end),'off')
+filename = dir(meshdir);
+for i=1:length(filename)
+    tic
+    [~,name,ext] = fileparts(filename(i).name);
+    meshfile = [meshdir,'/',filename(i).name];
+    disp([meshfile,'         ',num2str(i),' out of ',num2str(length(filename))])
+    if strcmp(ext(2:end),filetype)
+        % compute real voxel
+        [flag,instance] = real_voxel(meshfile,filetype,viz);
+        if flag ==0
+            % something went wrong
+            disp([meshfile,'  vertices number:',instance])
+        else
+            outfile = [outputdir,'/',name,'.mat'];
+            save(outfile,'instance');
+            if viz
+                outfile = [outputdir,'/',name,'.fig'];
+                savefig(gcf,outfile)
+                outfile = [outputdir,'/',name,'.png'];
+                saveas(gcf,outfile)
+            end
+        end
+    end
+    toc
+end
+end
+
+function [flag,instance_sal] = real_voxel(meshfile,filetype,viz)
+if strcmp(filetype,'off')
     FV = off_loader(meshfile, 0);
     Mesh = struct('v',FV.vertices,'f',FV.faces);
-elseif strcmp(meshfile(end-2:end),'son')
+elseif strcmp(filetype,'json')
     json2data = loadjson(['/media/storage/p2admin/Documents/Hope/voxnet/Pre/voxelization' filesep '392.json']);
     v = json2data.parsed.vertexArray;
     f = json2data.parsed.faceArray+1; % index from .json starts from 0, but required to be 1 for meshSaliencyPipeline
@@ -18,34 +42,51 @@ elseif strcmp(meshfile(end-2:end),'son')
 else
     assert(0);
 end
-% plot orignal mesh data
-figure;subplot(2,2,1);show3DModel(FV.faces,FV.vertices,0)
+if viz
+    % plot orignal mesh data
+    figure;subplot(2,2,1);show3DModel(FV.faces,FV.vertices,0)
+end
 
 % voxel model
 volume_size = 26;
 pad_size = 2; % and padding of two in each side
 instance = polygon2voxel(FV, [volume_size, volume_size, volume_size], 'auto');
 instance = padarray(instance, [pad_size, pad_size, pad_size]);
-% plot binary voxels
-subplot(2,2,2);show_sample(instance,0.5);axis([0,30,0,30,0,30])
+nnz_inst = nnz(instance);
+if viz
+    % plot binary voxels
+    subplot(2,2,2);show_sample(instance,0.5);axis([0,30,0,30,0,30])
+end
 
 % compute saliency, using curvature based method
-% v = sal(Mesh);
-load cup_0030.mat
-v = exp(3*v/max(v)); % convert to maximum e^3
+try
+    v = sal(Mesh);
+catch
+    % if something went wrong in curvature code
+    flag = 0; instance_sal = length(Mesh.v);
+    return
+end
+% load cup_0030.mat
+v = exp(1*v/max(v)); % convert to maximum e^3
 fv = recenter(FV,volume_size,pad_size);
-% plot saliency
-subplot(2,2,3);vis(fv,v);axis([0,30,0,30,0,30])
+if viz
+    % plot saliency
+    subplot(2,2,3);vis(fv,v);axis([0,30,0,30,0,30])
+end
 
 % assign saliency to voxel
 instance_sal = vox_sal(instance,fv,v);
-save('instance.mat','instance_sal');
-% plot salient part only
-subplot(2,2,4);
-% show_sample(instance_sal,1e-3);
-% plot3D(permute(instance,[2 1 3]) ,'pasive');
-fv=isosurface(instance_sal,1);
-vis(fv,v);axis([0,30,0,30,0,30])
+if viz
+    %only show 5 persent most salient
+    sal_ratio = 0.10;
+    [~,idx]=sort(instance_sal(:),'ascend');
+    t2=idx(1:end-floor(sal_ratio*nnz_inst));
+    instance_sal(t2)=0;
+    subplot(2,2,4);
+    plot3D(instance_sal);
+    axis([0,30,0,30,0,30]);xlabel('x');ylabel('y');zlabel('z'); view([1 0 0])
+end
+flag = 1;
 end
 
 function instance_sal=vox_sal(instance,fv,v)
@@ -62,12 +103,12 @@ for i=1:size(instance,1)
                 zl = fv.vertices(:,3)>k-1;
                 zr = fv.vertices(:,3)<=k;
                 idx = xl.*xr.*yl.*yr.*zl.*zr;
-
+                
                 vidx = find(idx);
-                if  ~isempty(vidx) 
+                if  ~isempty(vidx)
                     tt = max(v(vidx));
                     instance_sal(i,j,k) = tt;
-%                     disp([i,j,k,tt]);
+                    %                     disp([i,j,k,tt]);
                 else
                     % assign 1 if there is something but not salient
                     instance_sal(i,j,k) = instance(i,j,k);
@@ -102,9 +143,9 @@ end
 
 function vis(FV,v)
 p = patch(FV);
-p.FaceVertexAlphaData = v;
+p.FaceVertexAlphaData = v/20;
 p.FaceAlpha = 'interp';
-p.FaceVertexCData=v;
+p.FaceVertexCData=v/20;
 set(p,'FaceColor','blue','EdgeColor','none');
 daspect([1,1,1])
 grid on; axis tight
