@@ -38,11 +38,11 @@ fv = recenter(FV,volume_size,pad_size);
 subplot(2,2,3);vis(fv,v);axis([0,30,0,30,0,30])
 
 % assign saliency to voxel
-instance = vox_sal(instance,fv,v);
+instance_sal = vox_sal(instance,fv,v);
 
 % plot salient part only
 subplot(2,2,4);
-show_sample(instance,0.005);
+show_sample(instance_sal,0.005);
 % plot3D(permute(instance,[2 1 3]) ,'pasive');
 vis(fv,v);axis([0,30,0,30,0,30])
 end
@@ -50,15 +50,16 @@ end
 function instance_sal=vox_sal(instance,fv,v)
 instance_sal = zeros(size(instance));
 for i=1:size(instance,1)
+    instance = permute(instance,[2 1 3]);
     for j=1:size(instance,2)
         for k=1:size(instance,3)
             if instance(i,j,k)==1
                 xl = fv.vertices(:,1)>i-1;
-                xr = fv.vertices(:,1)<i;
+                xr = fv.vertices(:,1)<=i;
                 yl = fv.vertices(:,2)>j-1;
-                yr = fv.vertices(:,2)<j;
+                yr = fv.vertices(:,2)<=j;
                 zl = fv.vertices(:,3)>k-1;
-                zr = fv.vertices(:,3)<k;
+                zr = fv.vertices(:,3)<=k;
                 idx = xl.*xr.*yl.*yr.*zl.*zr;
 
                 vidx = find(idx, 1);
@@ -89,9 +90,10 @@ ly = ymax-ymin;
 lz = zmax-zmin;
 scale = max([lx,ly,lz]);
 
-FV.vertices(:,1) = (FV.vertices(:,1) +cx/2) / scale * vsize + vsize/2 + pad_size+1;
-FV.vertices(:,2) = (FV.vertices(:,2) +cy/2) / scale * vsize + vsize/2 + pad_size+1;
-FV.vertices(:,3) = (FV.vertices(:,3) +cz/2) / scale * vsize + vsize/2 + pad_size+1;
+FV.vertices(:,1) = (FV.vertices(:,1) +cx/2) / scale * vsize + vsize/2 + pad_size;
+FV.vertices(:,2) = (FV.vertices(:,2) +cy/2) / scale * vsize + vsize/2 + pad_size;
+FV.vertices(:,3) = (FV.vertices(:,3) +cz/2) / scale * vsize + vsize/2 + pad_size;
+
 end
 
 function vis(FV,v)
