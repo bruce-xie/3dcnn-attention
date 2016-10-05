@@ -1,4 +1,4 @@
-function instance=show_sal(meshfile)
+function show_sal(meshfile)
 % visualize both meshed object and its saliency computed by curvature
 % method
 % usage:
@@ -27,30 +27,31 @@ pad_size = 2; % and padding of two in each side
 instance = polygon2voxel(FV, [volume_size, volume_size, volume_size], 'auto');
 instance = padarray(instance, [pad_size, pad_size, pad_size]);
 % plot binary voxels
-subplot(2,2,2);show_sample(instance,0.5);
+subplot(2,2,2);show_sample(instance,0.5);axis([0,30,0,30,0,30])
 
 % compute saliency, using curvature based method
 % v = sal(Mesh);
 load cup_0030.mat
-v = 10*v/max(v); % convert to maximum 10
+v = exp(3*v/max(v)); % convert to maximum e^3
 fv = recenter(FV,volume_size,pad_size);
 % plot saliency
 subplot(2,2,3);vis(fv,v);axis([0,30,0,30,0,30])
 
 % assign saliency to voxel
 instance_sal = vox_sal(instance,fv,v);
-
+save('instance.mat','instance_sal');
 % plot salient part only
 subplot(2,2,4);
-show_sample(instance_sal,0.005);
+% show_sample(instance_sal,1e-3);
 % plot3D(permute(instance,[2 1 3]) ,'pasive');
+fv=isosurface(instance_sal,1);
 vis(fv,v);axis([0,30,0,30,0,30])
 end
 
 function instance_sal=vox_sal(instance,fv,v)
 instance_sal = zeros(size(instance));
+instance = permute(instance,[2 1 3]);
 for i=1:size(instance,1)
-    instance = permute(instance,[2 1 3]);
     for j=1:size(instance,2)
         for k=1:size(instance,3)
             if instance(i,j,k)==1
@@ -62,11 +63,14 @@ for i=1:size(instance,1)
                 zr = fv.vertices(:,3)<=k;
                 idx = xl.*xr.*yl.*yr.*zl.*zr;
 
-                vidx = find(idx, 1);
-                if  ~isempty(vidx) && j>25
+                vidx = find(idx);
+                if  ~isempty(vidx) 
                     tt = max(v(vidx));
                     instance_sal(i,j,k) = tt;
-                    disp([i,j,k,tt]);
+%                     disp([i,j,k,tt]);
+                else
+                    % assign 1 if there is something but not salient
+                    instance_sal(i,j,k) = instance(i,j,k);
                 end
             end
         end
