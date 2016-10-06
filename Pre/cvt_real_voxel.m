@@ -10,20 +10,20 @@ for i=1:length(filename)
     tic
     [~,name,ext] = fileparts(filename(i).name);
     meshfile = [meshdir,'/',filename(i).name];
-    if strcmp(ext(2:end),filetype) &&strcmp(name,'bathtub_0108')
+    if strcmp(ext(2:end),filetype)                    %&&strcmp(name,'bathtub_0108')
         % compute real voxel
-        [flag,instance] = real_voxel(meshfile,viz);
-        if flag ==0
+        [instance,h,vtxsal] = real_voxel(meshfile,viz);
+        if length(vtxsal) == 1
             % something went wrong
             disp([meshfile,'  vertices number:',num2str(instance),' Percentage: ',num2str(i),'/',num2str(length(filename)),' FAILED!'])
         else
             outfile = [outputdir,'/',name,'.mat'];
             save(outfile,'instance');
+            outfile = [outputdir,'/',name,'.val'];
+            save(outfile,'vtxsal');
             if viz
-                outfile = [outputdir,'/',name,'.fig'];
-                savefig(gcf,outfile)
                 outfile = [outputdir,'/',name,'.png'];
-                saveas(gcf,outfile)
+                saveas(h,outfile)
                 close all;
             end
             disp([meshfile,' Percentage: ',num2str(i),'/',num2str(length(filename)),' DONE!'])

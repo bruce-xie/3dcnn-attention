@@ -1,4 +1,4 @@
-function [flag,instance_sal] = real_voxel(meshfile,viz)
+function [instance_sal,h,vtxsal] = real_voxel(meshfile,viz)
 % convert a off or json mesh into real voxels based on given saliency
 % computation method "sal"
 [~,~,ext] = fileparts(meshfile);
@@ -16,7 +16,8 @@ else
 end
 if viz
     % plot orignal mesh data
-    figure;subplot(2,3,1);show3DModel(FV.faces,FV.vertices,0)
+    h = figure;set(h, 'Visible', 'off');
+    subplot(2,3,1);show3DModel(FV.faces,FV.vertices,0)
 end
 
 % voxel model
@@ -32,22 +33,22 @@ end
 
 % compute saliency, using curvature based method
 try
-    v = sal(Mesh);
+    vtxsal = sal(Mesh);
 catch
     % if something went wrong in curvature code
-    flag = 0; instance_sal = length(Mesh.v);
+    vtxsal = 0; instance_sal = length(Mesh.v);
     return
 end
 % load cup_0030.mat
-v = exp(1*v/max(v)); % convert to maximum e^3
+vtxsal = exp(1*vtxsal/max(vtxsal)); % convert to maximum e^3
 fv = recenter(FV,volume_size,pad_size);
 if viz
     % plot saliency
-    subplot(2,3,3);vis(fv,v);axis([0,30,0,30,0,30])
+    subplot(2,3,3);vis(fv,vtxsal);axis([0,30,0,30,0,30])
 end
 
 % assign saliency to voxel
-instance_sal = vox_sal(instance,fv,v);
+instance_sal = vox_sal(instance,fv,vtxsal);
 if viz
     %only show 10,30,60 persent most salient
     for i=1:3

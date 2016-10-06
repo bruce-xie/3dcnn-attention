@@ -4,7 +4,7 @@ pdir = '/home/p2admin/Documents/Hope';
 
 dbdir = [pdir,'/','ModelNet40'];
 vxdir = [pdir,'/','voxsal'];
-class_names = {'bathtub','bed','chair','desk','dresser',...
+class_names = {'chair','desk','dresser',...
     'monitor','night_stand','sofa','table','toilet'};
 
 i = 1;

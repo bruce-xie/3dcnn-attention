@@ -1,5 +1,6 @@
 
-function cvt_script()
+function cvt_script(pdir)
+% cvt_script('/media/storage/p2admin/Documents/Hope/voxnet/more_data_real_100_100_1_0');
 if 0
     f = 'morepottrain_00000009_1.mat';
     % location of nozzle and handle
@@ -12,39 +13,41 @@ if 0
     
     cvt(f,a,b);
 else
-    dd1 = './more_pot/30/train';
-    ff1 = dir(dd1);
-    for i=3:size(ff1,1)
-        fff=[dd1,'/',ff1(i).name];
-        load(fff);
-        instance(instance==10) = 3;
-        save(fff,'instance');
-    end
-    
-    dd2 = './more_pot/30/test';
+    old_sal_val = 10;
+    new_sal_val = 100;
+%     dd1 = [pdir,'/volumetric_data/more_pot/30/train'];
+%     ff1 = dir(dd1);
+%     for i=3:size(ff1,1)
+%         fff=[dd1,'/',ff1(i).name];
+%         load(fff);
+%         instance(instance==old_sal_val) = new_sal_val;
+%         save(fff,'instance');
+%     end
+%     
+    dd2 = [pdir,'/volumetric_data/more_pot/30/test'];
     ff2 = dir(dd2);
     for i=3:size(ff2,1)
-        fff=[dd1,'/',ff1(i).name];
+        fff=[dd2,'/',ff2(i).name];
         load(fff);
-        instance(instance==10) = 3;
+        instance(instance==old_sal_val) = new_sal_val;
         save(fff,'instance');
     end
     
-    dd3 = './more_cup/30/train';
+    dd3 = [pdir,'/volumetric_data/more_cup/30/train'];
     ff3 = dir(dd3);
     for i=3:size(ff3,1)
-        fff=[dd1,'/',ff1(i).name];
+        fff=[dd3,'/',ff3(i).name];
         load(fff);
-        instance(instance==10) = 3;
+        instance(instance==old_sal_val) = new_sal_val;
         save(fff,'instance');
     end
     
-    dd4 = './more_cup/30/test';
+    dd4 = [pdir,'/volumetric_data/more_cup/30/test'];
     ff4 = dir(dd4);
     for i=3:size(ff4,1)
-        fff=[dd1,'/',ff1(i).name];
+        fff=[dd4,'/',ff4(i).name];
         load(fff);
-        instance(instance==10) = 3;
+        instance(instance==old_sal_val) = new_sal_val;
         save(fff,'instance');
     end
 end
