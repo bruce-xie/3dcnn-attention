@@ -1,6 +1,6 @@
 clear; close all;
-threshold = 5;
-ddir = '/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/volumetric_data';
+threshold = 50;
+ddir = '/home/p2admin/Documents/Hope/voxnet/more_data_real_100_100_1_0/volumetric_data';
 
 dd1 = [ddir,'/more_pot/30/train'];
 ff1 = dir(dd1);
