@@ -1,6 +1,6 @@
 clear; close all;
-threshold = 41.5;
-ddir = '/home/p2admin/Documents/Hope/voxnet/more_data_real_100_100_1_0/volumetric_data';
+threshold = 0;
+ddir = '/home/p2admin/Documents/Hope/voxnet/more_data_curv/volumetric_data';
 
 dd1 = [ddir,'/more_pot/30/train'];
 ff1 = dir(dd1);

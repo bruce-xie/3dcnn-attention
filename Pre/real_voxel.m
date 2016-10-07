@@ -11,6 +11,9 @@ elseif strcmp(ext,'.json')
     f = json2data.parsed.faceArray+1; % index from .json starts from 0, but required to be 1 for meshSaliencyPipeline
     FV = struct('vertices',v,'faces',f);
     Mesh = struct('v',v,'f',f);
+elseif strcmp(ext,'.obj')
+    FV = obj_parser(meshfile,0);
+    Mesh = struct('v',FV.vertices,'f',FV.faces);
 else
     assert(0);
 end
@@ -18,6 +21,8 @@ if viz
     % plot orignal mesh data
     h = figure;set(h, 'Visible', 'off');
     subplot(2,3,1);show3DModel(FV.faces,FV.vertices,0)
+else
+    h = 0;
 end
 
 % voxel model

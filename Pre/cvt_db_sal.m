@@ -4,21 +4,21 @@ pdir = '/home/p2admin/Documents/Hope';
 
 dbdir = [pdir,'/','ModelNet40'];
 vxdir = [pdir,'/','voxsal'];
-class_names = {'chair','desk','dresser',...
-    'monitor','night_stand','sofa','table','toilet'};
+class_names = {'bed','sofa','desk'};
 
-i = 1;
-for i=1:2
-    switch i
+for tt=2:2
+    switch tt
         case 1
             fd = '/test';
         case 2
             fd = '/train';
     end
-    meshdir = [dbdir,'/',class_names{i},'/test'];
-    outputdir = [vxdir,'/',class_names{i},'/test'];
-    if ~exist(outputdir , 'dir')
-        mkdir(outputdir);
+    for i = 1:length(class_names)
+        meshdir = [dbdir,'/',class_names{i},fd];
+        outputdir = [vxdir,'/',class_names{i},fd];
+        if ~exist(outputdir , 'dir')
+            mkdir(outputdir);
+        end
+        cvt_real_voxel(meshdir,outputdir,'off',1)
     end
-    cvt_real_voxel(meshdir,outputdir,'off',1)
 end
