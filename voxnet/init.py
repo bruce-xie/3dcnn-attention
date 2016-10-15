@@ -48,7 +48,15 @@ class loadw1(lasagne.init.Initializer):
         pass
 
     def sample(self, shape):
-        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_3_3_1_0/weights.npz')['conv1.W.npy']
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['conv1.W.npy']
+        return floatX(W)
+
+class loadb1(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['conv1.b.npy']
         return floatX(W)
 
 class loadw2(lasagne.init.Initializer):
@@ -56,5 +64,46 @@ class loadw2(lasagne.init.Initializer):
         pass
 
     def sample(self, shape):
-        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_3_3_1_0/weights.npz')['conv2.W.npy']
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['conv2.W.npy']
         return floatX(W)
+
+class loadb2(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['conv2.b.npy']
+        return floatX(W)
+
+class loadw3(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['fc1.W.npy']
+        return floatX(W)
+
+class loadb3(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['fc1.b.npy']
+        return floatX(W)
+
+class loadw4(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['fc2.W.npy']
+        return floatX(W)
+
+class loadb4(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+
+    def sample(self, shape):
+        W = np.load('/home/p2admin/Documents/Hope/voxnet/more_data_real_10_10_1_0/weights.npz')['fc2.b.npy']
+        return floatX(W)
+
