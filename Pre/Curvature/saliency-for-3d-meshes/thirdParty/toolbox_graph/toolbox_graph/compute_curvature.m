@@ -21,7 +21,7 @@ function [Umin,Umax,Cmin,Cmax,Cmean,Cgauss,Normal] = compute_curvature(vertex,fa
 %       In Proc. 19th Annual ACM Symposium on Computational Geometry, 
 %       pages 237-246, 2003. 
 %   and also in
-%       Pierre Alliez, David Cohen-Steiner, Olivier Devillers, Bruno LeŽvy, and Mathieu Desbrun. 
+%       Pierre Alliez, David Cohen-Steiner, Olivier Devillers, Bruno Leï¿½vy, and Mathieu Desbrun. 
 %       Anisotropic Polygonal Remeshing. 
 %       ACM Transactions on Graphics, 2003. 
 %       Note: SIGGRAPH '2003 Conference Proceedings
@@ -45,6 +45,13 @@ A = -triangulation2adjacency(face);
 i = [face(1,:) face(2,:) face(3,:)];
 j = [face(2,:) face(3,:) face(1,:)];
 s = [1:m 1:m 1:m];
+
+tt= [i;j]';
+[~,b,~]=unique(tt,'rows');
+i = tt(b,1);
+j = tt(b,2);
+s = s(b);
+
 A = sparse(i,j,s,n,n); 
 
 [i,j,s1] = find(A);     % direct link

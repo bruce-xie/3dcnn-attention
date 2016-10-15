@@ -18,7 +18,7 @@ def write(records, fname):
     for (classname, instance, rot, fname) in records:
         class_id = int(shapenet10.class_name_to_id[classname])
         name = '{:03d}.{}.{:03d}'.format(class_id, instance, rot)
-        arr = scipy.io.loadmat(fname)['instance'].astype(np.uint8)
+        arr = scipy.io.loadmat(fname)['instance_sal'].astype(np.uint8)
         arrpad = np.zeros((32,)*3, dtype=np.uint8)
         arrpad[1:-1,1:-1,1:-1] = arr
         writer.add(arrpad, name)

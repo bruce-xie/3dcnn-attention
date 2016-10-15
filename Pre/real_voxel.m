@@ -1,9 +1,20 @@
-function [instance_sal,h,vtxsal] = real_voxel(meshfile,viz)
+function [instance_sal,instance,h,vtxsal] = real_voxel(meshfile,viz,ang,flag)
 % convert a off or json mesh into real voxels based on given saliency
 % computation method "sal"
 [~,~,ext] = fileparts(meshfile);
 if strcmp(ext,'.off')
-    FV = off_loader(meshfile, 0);
+    FV = off_loader(meshfile, ang);
+    %     Remove nodes (in the middle of an edge) not in the mesh
+    [a,~,~]=unique(sort(FV.faces(:)));
+    midnode = setdiff(1:length(FV.vertices),a);
+    notnode = a(end)+1:length(FV.vertices);
+    FV.vertices(notnode,:)=[];
+    %         reduce mesh first, for much faster computation
+    if length(FV.vertices)>1e5
+        FV=reducepatch(FV,1e5);
+    elseif length(FV.vertices)>1e4
+        FV=reducepatch(FV,length(FV.vertices)/10);
+    end
     Mesh = struct('v',FV.vertices,'f',FV.faces);
 elseif strcmp(ext,'.json')
     json2data = loadjson(['/media/storage/p2admin/Documents/Hope/voxnet/Pre/voxelization' filesep '392.json']);
@@ -19,7 +30,12 @@ else
 end
 if viz
     % plot orignal mesh data
-    h = figure;set(h, 'Visible', 'off');
+    h = figure;
+    if viz==1
+        set(h, 'Visible', 'off');
+    else
+        set(h, 'Visible', 'on');
+    end
     subplot(2,3,1);show3DModel(FV.faces,FV.vertices,0)
 else
     h = 0;
@@ -37,12 +53,17 @@ if viz
 end
 
 % compute saliency, using curvature based method
-try
-    vtxsal = sal(Mesh);
-catch
-    % if something went wrong in curvature code
-    vtxsal = 0; instance_sal = length(Mesh.v);
-    return
+if flag == 0 % avoid repeat compuation of saliency
+    try
+        vtxsal = sal(Mesh);
+    catch
+        % if something went wrong in curvature code
+        vtxsal = 0; instance_sal = length(Mesh.v);
+        return
+    end
+else
+    tmp = load(flag);
+    vtxsal = tmp.vtxsal;
 end
 % load cup_0030.mat
 vtxsal = exp(1*vtxsal/max(vtxsal)); % convert to maximum e^3
@@ -59,22 +80,35 @@ if viz
     for i=1:3
         switch i
             case 1
-                sal_ratio = 0.6;
+                sal_ratio = 1.0;
             case 2
-                sal_ratio = 0.3;
+                sal_ratio = 0.5;
             case 3
                 sal_ratio = 0.1;
         end
-    [~,idx]=sort(instance_sal(:),'ascend');
-    t2=idx(1:end-floor(sal_ratio*nnz_inst));
-    instance_sal(t2)=0;
-    subplot(2,3,3+i);
-    plot3D(instance_sal);
-    axis([0,30,0,30,0,30]);xlabel('x');ylabel('y');zlabel('z'); view([1 0 0])
+        [~,idx]=sort(instance_sal(:),'ascend');
+        t2=idx(1:end-floor(sal_ratio*nnz_inst));
+        instance_sal(t2)=0;
+        subplot(2,3,3+i);
+        plot3D(instance_sal);
+        axis([0,30,0,30,0,30]);xlabel('x');ylabel('y');zlabel('z'); view([1 0 0])
     end
 end
-flag = 1;
 end
+
+% function rot_load(fname,theta)
+% load(fname)
+% theta = theta * pi / 180;
+% R = [cos(theta), -sin(theta), 0;
+%     sin(theta), cos(theta) , 0;
+%     0      ,    0       , 1];
+% 
+% offobj.vertices = offobj.vertices * R;
+% 
+% % These vertices to define faces should be offset by one to follow the matlab convention.
+% offobj.faces = offobj.faces(:,2:end) + 1;
+% 
+% end
 
 function instance_sal=vox_sal(instance,fv,v)
 instance_sal = zeros(size(instance));
@@ -93,8 +127,12 @@ for i=1:size(instance,1)
                 
                 vidx = find(idx);
                 if  ~isempty(vidx)
-                    tt = max(v(vidx));
-                    instance_sal(i,j,k) = tt;
+                    try
+                        tt = max(v(vidx));
+                        instance_sal(i,j,k) = tt;
+                    catch
+                        save('dbg.mat','v','vidx','fv')
+                    end
                     %                     disp([i,j,k,tt]);
                 else
                     % assign 1 if there is something but not salient
